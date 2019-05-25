@@ -12,10 +12,10 @@ export class MapComponent implements OnInit {
   key: string = environment["AZURE_MAPS_KEY"]
   map: atlas.Map;
   @Input() set markers(markers: any[]) {
-    this._markers = this.geoMarkersService.getData();
+    this._points = this.geoMarkersService.getData();
     console.log(this.markers);
   }
-  _markers: atlas.HtmlMarker[];
+  _points: atlas.data.Point[];
 
   constructor(private geoMarkersService: GeoMarkersService) { }
 
@@ -45,29 +45,32 @@ export class MapComponent implements OnInit {
       });
 
       /* Add compass control */
-      var compassControl = new  atlas.control.CompassControl();
-  
+      var compassControl = new atlas.control.CompassControl();
+
       /*Add compass control to the map*/
       this.map.controls.add(compassControl, {
-        position:  atlas.ControlPosition.BottomLeft
+        position: atlas.ControlPosition.BottomLeft
       });
 
       /*TODO - controlers are not working fine */
 
 
-      this._markers = this.geoMarkersService.getData().resources.map(element => {
-        return new atlas.HtmlMarker({
-            color: 'DodgerBlue',
-            htmlContent: "<div>"+element['ayto:parada']+"</div>",
-            position: [element['wgs84_pos:lat'],element['wgs84_pos:long']],
-          })
-        }
-      );
-      this.map.markers.add(this._markers);  
-      this.map.events.add('click',this._markers[0], () => {
-        this._markers[0].togglePopup();
-      });  
+      this._points = this.geoMarkersService.getData().resources.map(element => {
+        return new atlas.data.Point([element['wgs84_pos:long'], element['wgs84_pos:lat']])
+      });
 
+      console.log(this._points);
+      var dataSource = new atlas.source.DataSource();
+      this.map.sources.add(dataSource);
+      /*Add multiple points to the data source*/
+      dataSource.add(this._points);
+
+      this.map.layers.add(new atlas.layer.BubbleLayer(dataSource, null, {
+        radius: 5,
+        strokeColor: "#4288f7",
+        strokeWidth: 6, 
+        color: "white" 
+       }));
     })
 
   }
